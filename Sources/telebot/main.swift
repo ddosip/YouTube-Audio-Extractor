@@ -6,7 +6,7 @@ import Foundation
 guard
     let path = Bundle.main.path(forResource: "Token", ofType: "plist"),
     let dict = NSDictionary(contentsOfFile: path),
-    let TELEGRAM_BOT_TOKEN = dict["TELEGRAM_BOT_TOKEN"] as? String else { exit(1) }
+    let TELEGRAM_BOT_TOKEN = dict["TELEGRAM_BOT_TOKEN"] as? String else { print("Error token");exit(1) }
 
 
 let bot = try! Bot(token: TELEGRAM_BOT_TOKEN)
