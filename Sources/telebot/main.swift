@@ -26,8 +26,9 @@ class YouTubeBot {
             
             guard let validURL = URL(string: messageText) else { try! message.reply(text: "Кажеться, ты прислал мне не ссылку на YouTube!", from: bot); return }
             
-            shell("/usr/local/bin/youtube-dl", "-i", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0", "-o", "\"~/YouTubeFiles/%(title)s-%(id)s.%(ext)s\"", "https://www.youtube.com/watch?v=IWTvgZVWeB4")
+            let status = shell("/usr/local/bin/youtube-dl", "-i", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0", "-o", "\"~/YouTubeFiles/%(title)s-%(id)s.%(ext)s\"", "https://www.youtube.com/watch?v=IWTvgZVWeB4")
             
+            try! message.reply(text: "\(status)", from: bot)
         }
         
         let dispatcher = Dispatcher(bot: bot)
