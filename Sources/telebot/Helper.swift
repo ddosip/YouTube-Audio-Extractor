@@ -6,9 +6,9 @@ typealias Token = String
 // MARK: Classes
 
 // Telebot custom errors
-enum TBError: String, Error {
-    case TokenPlistNotFound = "Token.plist notw found"
-    case TokenParse = "Invalid Token.plist"
+enum TBError: Error {
+    case TokenPlistNotFound(code: Int, text: String)
+    case TokenParse(code: Int, text: String)
 }
 
 
@@ -16,10 +16,13 @@ enum TBError: String, Error {
 
 func getToken() throws -> Token {
     guard
-        let path = Bundle.main.path(forResource: "Token", ofType: "plist") else { throw TBError.TokenPlistNotFound }
+        let path = Bundle.main.path(forResource: "Token", ofType: "plist")
+        else {
+            throw TBError.TokenPlistNotFound(code: 1, text: "Token.plist not found")
+    }
     guard
         let dict = NSDictionary(contentsOfFile: path),
-        let token = dict["TELEGRAM_BOT_TOKEN"] as? String else { throw TBError.TokenParse }
+        let token = dict["TELEGRAM_BOT_TOKEN"] as? String else { throw TBError.TokenParse(code: 2, text: "Invalid Token.plist") }
     
     return token
     
