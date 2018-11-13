@@ -34,13 +34,16 @@ class YouTubeBot {
             let fileList = try! FileManager.default.contentsOfDirectory(atPath: youTubePath.path)
             
             for file in fileList {
-                try? FileManager.default.removeItem(atPath: youTubePath.appendingPathComponent(file).path)
+                try! FileManager.default.removeItem(atPath: youTubePath.appendingPathComponent(file).path)
             }
             
             let needFileUrl = youTubePath.appendingPathComponent(fileList.first!)
-            let data = try! Data(contentsOf: needFileUrl)
-            let audioParams = Bot.SendAudioParams(chatId: ChatId.chat(message.chat.id), audio: FileInfo.file(InputFile(data: data, filename: fileList.first!)) )
-            try! bot.sendAudio(params: audioParams)
+            if let data = try? Data(contentsOf: needFileUrl) {
+                let audioParams = Bot.SendAudioParams(chatId: ChatId.chat(message.chat.id), audio: FileInfo.file(InputFile(data: data, filename: fileList.first!)) )
+                try! bot.sendAudio(params: audioParams)
+            } else {
+                try! message.reply(text: "Что-то пошло не так((", from: bot)
+            }
         }
         
         let dispatcher = Dispatcher(bot: bot)
