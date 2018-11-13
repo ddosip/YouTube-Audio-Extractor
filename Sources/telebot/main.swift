@@ -26,7 +26,7 @@ class YouTubeBot {
             
             guard let validURL = URL(string: messageText) else { try! message.reply(text: "Кажеться, ты прислал мне не ссылку на YouTube!", from: bot); return }
             
-            let _ = shell("/usr/local/bin/youtube-dl", "-i", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0", "-o", "/root/YouTubeFiles/%(title)s-%(id)s.%(ext)s", validURL.path)
+            let _ = shell("/usr/local/bin/youtube-dl", "-i", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0", "-o", "/root/YouTubeFiles/%(title)s-%(id)s.%(ext)s", validURL.absoluteString)
             
             var youTubePath = FileManager.default.homeDirectory(forUser: "root")!
             youTubePath.appendPathComponent("YouTubeFiles/")
