@@ -30,7 +30,13 @@ class YouTubeBot {
             
             var youTubePath = FileManager.default.homeDirectory(forUser: "root")!
             youTubePath.appendPathComponent("YouTubeFiles/")
+            
             let fileList = try! FileManager.default.contentsOfDirectory(atPath: youTubePath.path)
+            
+            for file in fileList {
+                try! FileManager.default.removeItem(atPath: file)
+            }
+            
             let needFileUrl = youTubePath.appendingPathComponent(fileList.first!)
             let data = try! Data(contentsOf: needFileUrl)
             let audioParams = Bot.SendAudioParams(chatId: ChatId.chat(message.chat.id), audio: FileInfo.file(InputFile(data: data, filename: fileList.first!)) )
