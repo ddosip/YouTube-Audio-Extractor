@@ -26,19 +26,15 @@ class YouTubeBot {
             
             guard let validURL = URL(string: messageText) else { try! message.reply(text: "Кажеться, ты прислал мне не ссылку на YouTube!", from: bot); return }
             
-            let output = shell("/usr/local/bin/youtube-dl", "-i", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0", "-o", "/root/YouTubeFiles/%(title)s-%(id)s.%(ext)s", "https://www.youtube.com/watch?v=IWTvgZVWeB4")
+            let _ = shell("/usr/local/bin/youtube-dl", "-i", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0", "-o", "/root/YouTubeFiles/%(title)s-%(id)s.%(ext)s", validURL.path)
             
-            //if #available(OSX 10.12, *) {
-                var youTubePath = FileManager.default.homeDirectory(forUser: "root")!
-                youTubePath.appendPathComponent("YouTubeFiles/")
-                let fileList = try! FileManager.default.contentsOfDirectory(atPath: youTubePath.path)
-                let needFileUrl = youTubePath.appendingPathComponent(fileList.first!)
-                let data = try! Data(contentsOf: needFileUrl)
-                let audioParams = Bot.SendAudioParams(chatId: ChatId.chat(message.chat.id), audio: FileInfo.file(InputFile(data: data, filename: fileList.first!)) )
-                try! bot.sendAudio(params: audioParams)
-            //}
-            
-            try! message.reply(text: "\(output!)", from: bot)
+            var youTubePath = FileManager.default.homeDirectory(forUser: "root")!
+            youTubePath.appendPathComponent("YouTubeFiles/")
+            let fileList = try! FileManager.default.contentsOfDirectory(atPath: youTubePath.path)
+            let needFileUrl = youTubePath.appendingPathComponent(fileList.first!)
+            let data = try! Data(contentsOf: needFileUrl)
+            let audioParams = Bot.SendAudioParams(chatId: ChatId.chat(message.chat.id), audio: FileInfo.file(InputFile(data: data, filename: fileList.first!)) )
+            try! bot.sendAudio(params: audioParams)
         }
         
         let dispatcher = Dispatcher(bot: bot)
