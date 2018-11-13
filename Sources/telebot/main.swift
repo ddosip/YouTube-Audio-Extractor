@@ -34,7 +34,7 @@ class YouTubeBot {
             let fileList = try! FileManager.default.contentsOfDirectory(atPath: youTubePath.path)
             
             for file in fileList {
-                try! FileManager.default.removeItem(atPath: file)
+                try! FileManager.default.removeItem(atPath: youTubePath.appendingPathComponent(file).path)
             }
             
             let needFileUrl = youTubePath.appendingPathComponent(fileList.first!)
