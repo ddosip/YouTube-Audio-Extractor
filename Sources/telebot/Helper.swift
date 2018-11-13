@@ -27,3 +27,15 @@ func getToken() throws -> Token {
     return token
     
 }
+
+@discardableResult
+func shell(_ args: String...) -> Int32 {
+    let task = Process()
+    task.launchPath = "/usr/bin/env"
+    task.arguments = args
+    let pipe = Pipe()
+    task.standardOutput = pipe
+    task.launch()
+    task.waitUntilExit()
+    return task.terminationStatus
+}
