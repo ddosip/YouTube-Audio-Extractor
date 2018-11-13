@@ -39,4 +39,6 @@ class YouTubeBot {
 }
 
 
-YouTubeBot.start()
+//YouTubeBot.start()
+ let status = shell("/usr/local/bin/youtube-dl", "-i", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0", "-o", "\"~/YouTubeFiles/%(title)s-%(id)s.%(ext)s\"", "https://www.youtube.com/watch?v=IWTvgZVWeB4")
+print(status!)

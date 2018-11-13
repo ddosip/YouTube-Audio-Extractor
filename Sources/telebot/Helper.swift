@@ -29,7 +29,7 @@ func getToken() throws -> Token {
 }
 
 @discardableResult
-func shell(_ args: String...) -> Int32 {
+func shell(_ args: String...) -> String? {
     let task = Process()
     task.launchPath = "/usr/bin/env"
     task.arguments = args
@@ -37,5 +37,8 @@ func shell(_ args: String...) -> Int32 {
     task.standardOutput = pipe
     task.launch()
     task.waitUntilExit()
-    return task.terminationStatus
+    let data = pipe.fileHandleForReading.readDataToEndOfFile()
+    let out = String(data: data, encoding: String.Encoding.utf8)
+    
+    return out
 }
