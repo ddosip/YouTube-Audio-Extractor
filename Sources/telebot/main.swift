@@ -1,91 +1,130 @@
 import Foundation
 import Telegrammer
 
-//youtube-dl -i --extract-audio --audio-format mp3 --audio-quality 0 -o "~/YouTubeFiles/%(title)s-%(id)s.%(ext)s" https://www.youtube.com/watch?v=IWTvgZVWeB4
-
-class YouTubeBot {
-    static func start() {
-        var token: Token = ""
+class YouTubeAudioExtractor {
+    
+    // MARK: Typealias
+    typealias Token = String
+    
+    // MARK: Properties
+    private let bot: Bot
+    
+    // MARK: Init
+    init?() {
+        guard
+            let path = Bundle.main.path(forResource: "Token", ofType: "plist") else { return nil }
+        guard
+            let dict = NSDictionary(contentsOfFile: path),
+            let token = dict["TELEGRAM_BOT_TOKEN"] as? String else { return nil }
         
-        do {
-            token = try Helper.getToken()
-        } catch TBError.TokenPlistNotFound(let code, let text) {
-            print(text)
-            exit(Int32(code))
-        } catch TBError.TokenParse(let code, let text) {
-            print(text)
-            exit(Int32(code))
-        } catch {
-            exit(Int32(1))
-        }
-        
-        let bot = try! Bot(token: token)
-        
-        let linkhandler = MessageHandler { (update, _) in
-            guard let message = update.message, let messageText = update.message?.text else { return }
+        self.bot = try! Bot(token: token)
+    }
+    
+    // MARK: Private functions
+    @discardableResult
+    fileprivate func executeShell(_ args: String..., completion: @escaping () -> () ) -> String? {
+        let task = Process()
+        task.launchPath = "/usr/bin/env"
+        task.arguments = args
+        let pipe = Pipe()
+        task.standardOutput = pipe
+        task.launch()
+        task.waitUntilExit()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let out = String(data: data, encoding: String.Encoding.utf8)
+        completion()
+        return out
+    }
+    
+    fileprivate func validateYoutubeLinks(urls youtubeURLs: [String]) -> [(url: String, isValid: Bool)]? {
+        guard !youtubeURLs.isEmpty else { return nil }
+        var resultTuple: [(url: String, isValid: Bool)]?
+        resultTuple = youtubeURLs.map { (url: $0, isValid: validate(url: $0)) }
+        return resultTuple
+    }
+    
+    fileprivate func validate(url: String) -> Bool {
+        let pattern = "(?:(?:.be/|embed/|v/|\\?v=|&v=|/videos/)|(?:[\\w+]+#\\w/\\w(?:/[\\w]+)?/\\w/))([\\w-_]+)"
+        let regex = try? NSRegularExpression(pattern: pattern, options: NSRegularExpression.Options.caseInsensitive)
+        return regex?.firstMatch(in: url, options: [], range: NSMakeRange(0, url.count)) != nil
+    }
+    
+    fileprivate func createDirectoriesIfNeeded(for userName: String) -> URL? {
+        let fileManager = FileManager.default
+        //if #available(OSX 10.12, *) {
+            let rootPath = fileManager.homeDirectoryForCurrentUser
+            let youtubeDirectoryPath = rootPath.appendingPathComponent("YouTubeFiles")
+            try? fileManager.createDirectory(atPath: youtubeDirectoryPath.absoluteString, withIntermediateDirectories: true, attributes: nil)
+            guard fileManager.fileExists(atPath: youtubeDirectoryPath.absoluteString) else { return nil }
             
-            // 1. Проверить что messageText валидная ссылка на YouTube
-            let results = Helper.isValidYoutubeLinks(urls: [messageText])
-            guard let result = results?.first, result.isValid else {
-                try! message.reply(text: "Кажеться, ты прислал мне не ссылку на YouTube.", from: bot)
+            let endpointUrl = youtubeDirectoryPath.appendingPathComponent(userName)
+            try? fileManager.createDirectory(at: endpointUrl, withIntermediateDirectories: true, attributes: nil)
+            guard fileManager.fileExists(atPath: endpointUrl.absoluteString) else { return nil }
+            
+            if let files = try? fileManager.contentsOfDirectory(atPath: endpointUrl.absoluteString) {
+                for file in files {
+                    try? fileManager.removeItem(atPath: endpointUrl.appendingPathComponent(file).path)
+                }
+            }
+            return endpointUrl
+//        } else {
+//            return nil
+//        }
+    }
+    
+    // MARK: Start
+    func start() {
+        let linkHandler = MessageHandler { [unowned self] (update, _) in
+            guard let message = update.message, let messageText = update.message?.text, let username = message.from?.username else { return }
+            
+            // 1. Проверяем что messageText валидная ссылка на YouTube
+            let results = self.validateYoutubeLinks(urls: [messageText])
+            guard let youtubeLink = results?.first, youtubeLink.isValid else {
+                try! message.reply(text: "Кажеться, ты прислал мне не ссылку на YouTube.", from: self.bot)
                 return
             }
-
-            try! message.reply(text: "Это ссылка на YouTube", from: bot)
             
-            // 2. В папке /root/YouTubeFiles/ создать подпапку с именем пользователя
+            // 2. Создаем всю необходимую файловую иерархию, если нужно ../$SYSTEM_USERNAME$/YouTubeFiles/$BOT_USERNAME$/
+            guard let endpointUrl = self.createDirectoriesIfNeeded(for: username) else {
+                try! message.reply(text: "Не удалось выделить для тебя место :(", from: self.bot)
+                return
+            }
             
-            
-            // 3. Удалить все файлы в папке шага 3
-            // 4. Запустить shell
-            // 5. Конвертировать полученный файл в data
-            // 6. Послать сообщение с файлом
-            
-            
-//            var youTubePath = FileManager.default.homeDirectory(forUser: "root")!
-//            youTubePath.appendPathComponent("YouTubeFiles/")
-//
-//            let fileList = try! FileManager.default.contentsOfDirectory(atPath: youTubePath.path)
-//            for file in fileList {
-//                try! FileManager.default.removeItem(atPath: youTubePath.appendingPathComponent(file).path)
-//            }
-//
-//            let _ = Helper.shell("/usr/local/bin/youtube-dl", "-i", "--extract-audio", "--audio-format", "mp3", "--audio-quality", "0", "-o", "/root/YouTubeFiles/%(title)s-%(id)s.%(ext)s", validURL.absoluteString)
-//
-//
-//            let needFileUrl = youTubePath.appendingPathComponent(fileList.first!)
-//            if let data = try? Data(contentsOf: needFileUrl) {
-//                let audioParams = Bot.SendAudioParams(chatId: ChatId.chat(message.chat.id), audio: FileInfo.file(InputFile(data: data, filename: fileList.first!)) )
-//                try! bot.sendAudio(params: audioParams)
-//            } else {
-//                try! message.reply(text: "Что-то пошло не так((", from: bot)
-//            }
+            // 4. Запускаем shell
+            self.executeShell(
+                "/usr/local/bin/youtube-dl",
+                "-i",
+                "--extract-audio",
+                "--audio-format", "mp3",
+                "--audio-quality", "0",
+                "-o", "/root/YouTubeFiles/%(title)s-%(id)s.%(ext)s", youtubeLink.url,
+                completion: { [unowned self] in
+                    let fileManager = FileManager.default
+                    guard
+                        let files = try? fileManager.contentsOfDirectory(atPath: endpointUrl.absoluteString),
+                        let needFilePath = files.first,
+                        let needFileUrl = URL(string: needFilePath)
+                        else {
+                            try! message.reply(text: "Не удалось найти сконвертированный файл :(", from: self.bot)
+                            return
+                    }
+                    
+                    if let data = try? Data(contentsOf: needFileUrl) {
+                        let audioParams = Bot.SendAudioParams(chatId: ChatId.chat(message.chat.id), audio: FileInfo.file(InputFile(data: data, filename: needFilePath)) )
+                        try! self.bot.sendAudio(params: audioParams)
+                    } else {
+                        try! message.reply(text: "Что-то пошло не так((", from: self.bot)
+                    }
+                }
+            )
         }
         
         let dispatcher = Dispatcher(bot: bot)
-        dispatcher.add(handler: linkhandler)
+        dispatcher.add(handler: linkHandler)
         
         _ = try! Updater(bot: bot, dispatcher: dispatcher).startLongpolling().wait()
     }
 }
 
-YouTubeBot.start()
-
-let testLinks = ["http://www.youtube.com/watch?v=iwGFalTRHDA",
-                 "http://www.youtube.com/watch?v=iwGFalTRHDA&feature=related",
-                 "http://youtu.be/iwGFalTRHDA",
-                 "http://youtu.be/n17B_uFF4cA",
-                 "http://www.youtube.com/embed/watch?feature=player_embedded&v=r5nB9u4jjy4",
-                 "http://www.youtube.com/watch?v=t-ZRX8984sc",
-                 "http://youtu.be/t-ZRX8984sc",
-                 "https://www.youtube.com/watch?v=DDgekKQ8nLc",
-                 "https://www.youtube.com/watch?v=GurkREc-q4I",
-                 "https://www.youtube.com/watch?v=j-qQ_brIsfY",
-                 "https://www.youtube.com/watch?v=03X0B6u-AxM",
-                 "https://www.youtube.com/watch?v=4ZqWLIQaKM4",
-                 "https://www.youtube.com/watch?v=D3sg1sDhX0U",
-                 "https://www.youtube.com/watch?v=zfTz83yQ8hU",
-                 "https://www.youtube.com/watch?v=azeh1ZbxWwI",
-                 "https://www.youtube.com/watch?v=DMjIYp-FwQA",
-                 "хуй",
-                 "https://github.com/rg3/youtube-dl"]
+guard let audioExtractor = YouTubeAudioExtractor() else { exit(1) }
+audioExtractor.start()
