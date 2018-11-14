@@ -49,19 +49,19 @@ class YouTubeAudioExtractor {
         return regex?.firstMatch(in: url, options: [], range: NSMakeRange(0, url.count)) != nil
     }
     
-    fileprivate func createDirectoriesIfNeeded(for userName: String) -> URL? {
+    func createDirectoriesIfNeeded(for userName: String) -> URL? {
         let fileManager = FileManager.default
         //if #available(OSX 10.12, *) {
             let rootPath = fileManager.homeDirectoryForCurrentUser
             let youtubeDirectoryPath = rootPath.appendingPathComponent("YouTubeFiles")
-            try? fileManager.createDirectory(atPath: youtubeDirectoryPath.absoluteString, withIntermediateDirectories: true, attributes: nil)
-            guard fileManager.fileExists(atPath: youtubeDirectoryPath.absoluteString) else { return nil }
+            try? fileManager.createDirectory(atPath: youtubeDirectoryPath.path, withIntermediateDirectories: true, attributes: nil)
+            guard fileManager.fileExists(atPath: youtubeDirectoryPath.path) else { return nil }
             
             let endpointUrl = youtubeDirectoryPath.appendingPathComponent(userName)
             try? fileManager.createDirectory(at: endpointUrl, withIntermediateDirectories: true, attributes: nil)
-            guard fileManager.fileExists(atPath: endpointUrl.absoluteString) else { return nil }
+            guard fileManager.fileExists(atPath: endpointUrl.path) else { return nil }
             
-            if let files = try? fileManager.contentsOfDirectory(atPath: endpointUrl.absoluteString) {
+            if let files = try? fileManager.contentsOfDirectory(atPath: endpointUrl.path) {
                 for file in files {
                     try? fileManager.removeItem(atPath: endpointUrl.appendingPathComponent(file).path)
                 }
@@ -97,13 +97,13 @@ class YouTubeAudioExtractor {
                 "--extract-audio",
                 "--audio-format", "mp3",
                 "--audio-quality", "0",
-                "-o", "/root/YouTubeFiles/%(title)s-%(id)s.%(ext)s", youtubeLink.url,
+                "-o", "/root/YouTubeFiles/\(username)/%(title)s-%(id)s.%(ext)s", youtubeLink.url,
                 completion: { [unowned self] in
                     let fileManager = FileManager.default
                     guard
-                        let files = try? fileManager.contentsOfDirectory(atPath: endpointUrl.absoluteString),
+                        let files = try? fileManager.contentsOfDirectory(atPath: endpointUrl.path),
                         let needFilePath = files.first,
-                        let needFileUrl = URL(string: needFilePath)
+                        let needFileUrl = URL(string: endpointUrl.appendingPathComponent(needFilePath).path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "")
                         else {
                             try! message.reply(text: "Не удалось найти сконвертированный файл :(", from: self.bot)
                             return
@@ -128,3 +128,4 @@ class YouTubeAudioExtractor {
 
 guard let audioExtractor = YouTubeAudioExtractor() else { exit(1) }
 audioExtractor.start()
+//print(audioExtractor.createDirectoriesIfNeeded(for: "ddosip"))
