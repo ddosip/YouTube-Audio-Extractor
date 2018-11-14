@@ -26,7 +26,7 @@ class YouTubeBot {
             
             // 1. Проверить что messageText валидная ссылка на YouTube
             let results = Helper.isValidYoutubeLinks(urls: [messageText])
-            guard let result = results?.first, !result.isValid else {
+            guard let result = results?.first, result.isValid else {
                 try! message.reply(text: "Кажеться, ты прислал мне не ссылку на YouTube.", from: bot)
                 return
             }
