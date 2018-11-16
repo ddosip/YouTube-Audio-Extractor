@@ -102,12 +102,13 @@ class YouTubeAudioExtractor {
                     let fileManager = FileManager.default
                     guard
                         let files = try? fileManager.contentsOfDirectory(atPath: endpointUrl.path),
-                        let needFilePath = files.first,
-                        let needFileUrl = URL(string: endpointUrl.appendingPathComponent(needFilePath).path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? "")
+                        let needFilePath = files.first
                         else {
                             try! message.reply(text: "Не удалось найти сконвертированный файл :(", from: self.bot)
                             return
                     }
+
+                    let needFileUrl = URL(fileURLWithPath: endpointUrl.appendingPathComponent(needFilePath).path)
                     
                     if let data = try? Data(contentsOf: needFileUrl) {
                         let audioParams = Bot.SendAudioParams(chatId: ChatId.chat(message.chat.id), audio: FileInfo.file(InputFile(data: data, filename: needFilePath)) )
