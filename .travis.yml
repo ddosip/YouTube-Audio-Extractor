@@ -1,5 +1,5 @@
 os:
-- osx
+- linux
 language: swift
 sudo: required
 dist: trusty
