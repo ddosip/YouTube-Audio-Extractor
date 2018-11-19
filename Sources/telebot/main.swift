@@ -22,7 +22,7 @@ class YouTubeAudioExtractor {
     
     // MARK: Private functions
     @discardableResult
-    fileprivate func executeShell(_ args: String..., completion: @escaping () -> () ) -> String? {
+    fileprivate func executeShell(_ args: String..., completion: () -> () ) -> String? {
         let task = Process()
         task.launchPath = "/usr/bin/env"
         task.arguments = args
@@ -49,9 +49,9 @@ class YouTubeAudioExtractor {
         return regex?.firstMatch(in: url, options: [], range: NSMakeRange(0, url.count)) != nil
     }
     
-    func createDirectoriesIfNeeded(for userName: String) -> URL? {
+    fileprivate func createDirectoriesIfNeeded(for userName: String) -> URL? {
         let fileManager = FileManager.default
-        //if #available(OSX 10.12, *) {
+        if #available(OSX 10.12, *) {
             let rootPath = fileManager.homeDirectoryForCurrentUser
             let youtubeDirectoryPath = rootPath.appendingPathComponent("YouTubeFiles")
             try? fileManager.createDirectory(atPath: youtubeDirectoryPath.path, withIntermediateDirectories: true, attributes: nil)
@@ -67,9 +67,9 @@ class YouTubeAudioExtractor {
                 }
             }
             return endpointUrl
-//        } else {
-//            return nil
-//        }
+        } else {
+            return nil
+        }
     }
     
     // MARK: Start
@@ -77,20 +77,17 @@ class YouTubeAudioExtractor {
         let linkHandler = MessageHandler { [unowned self] (update, _) in
             guard let message = update.message, let messageText = update.message?.text, let username = message.from?.username else { return }
             
-            // 1. Проверяем что messageText валидная ссылка на YouTube
             let results = self.validateYoutubeLinks(urls: [messageText])
             guard let youtubeLink = results?.first, youtubeLink.isValid else {
                 try! message.reply(text: "Кажеться, ты прислал мне не ссылку на YouTube.", from: self.bot)
                 return
             }
             
-            // 2. Создаем всю необходимую файловую иерархию, если нужно ../$SYSTEM_USERNAME$/YouTubeFiles/$BOT_USERNAME$/
             guard let endpointUrl = self.createDirectoriesIfNeeded(for: username) else {
                 try! message.reply(text: "Не удалось выделить для тебя место :(", from: self.bot)
                 return
             }
             
-            // 4. Запускаем shell
             self.executeShell(
                 "/usr/local/bin/youtube-dl",
                 "-i",
@@ -129,4 +126,3 @@ class YouTubeAudioExtractor {
 
 guard let audioExtractor = YouTubeAudioExtractor() else { exit(1) }
 audioExtractor.start()
-//print(audioExtractor.createDirectoriesIfNeeded(for: "ddosip"))
