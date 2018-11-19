@@ -1,0 +1,7 @@
+os:
+- osx
+language: swift
+sudo: required
+dist: trusty
+script:
+  - swift build
