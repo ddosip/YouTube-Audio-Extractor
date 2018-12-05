@@ -107,6 +107,10 @@ class YouTubeAudioExtractor {
                     }
 
                     let needFileUrl = URL(fileURLWithPath: endpointUrl.appendingPathComponent(needFilePath).path)
+                    if let fileAttributes = try? fileManager.attributesOfItem(atPath: needFileUrl.path) {
+                        try! message.reply(text: "Размер сконвертированного файла - \(fileAttributes[.size] as! NSNumber)", from: self.bot)
+                    }
+                    
                     
                     if let data = try? Data(contentsOf: needFileUrl) {
                         let audioParams = Bot.SendAudioParams(chatId: ChatId.chat(message.chat.id), audio: FileInfo.file(InputFile(data: data, filename: needFilePath)) )
