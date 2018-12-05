@@ -107,8 +107,13 @@ class YouTubeAudioExtractor {
                     }
 
                     let needFileUrl = URL(fileURLWithPath: endpointUrl.appendingPathComponent(needFilePath).path)
-                    if let fileAttributes = try? fileManager.attributesOfItem(atPath: needFileUrl.path) {
-                        try! message.reply(text: "Размер сконвертированного файла - \(fileAttributes[.size] as! NSNumber)", from: self.bot)
+                    if let fileAttributes = try? fileManager.attributesOfItem(atPath: needFileUrl.path),
+                        let size = fileAttributes[.size] as? NSNumber,
+                        let sizeInt64 = Int64(exactly: size) {
+                        let byteCountFormatter = ByteCountFormatter()
+                        byteCountFormatter.allowedUnits = [.useMB]
+                        byteCountFormatter.countStyle = .file
+                        try! message.reply(text: "Размер сконвертированного файла - \(byteCountFormatter.string(fromByteCount: sizeInt64))", from: self.bot)
                     }
                     
                     
