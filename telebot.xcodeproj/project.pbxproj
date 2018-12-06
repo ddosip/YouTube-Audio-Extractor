@@ -4094,7 +4094,6 @@
 				OBJ_10 /* Tests */,
 				OBJ_14 /* Dependencies */,
 				OBJ_550 /* Products */,
-				52510ABF21B981D90032F48B /* telebot-Bridging-Header.h */,
 			);
 			sourceTree = "<group>";
 		};
@@ -4294,6 +4293,7 @@
 			isa = PBXGroup;
 			children = (
 				OBJ_9 /* main.swift */,
+				52510ABF21B981D90032F48B /* telebot-Bridging-Header.h */,
 			);
 			name = telebot;
 			path = Sources/telebot;
