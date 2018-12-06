@@ -1,0 +1,4 @@
+module CCryptoOpenSSL {
+    umbrella "/Users/ddos/Developer/telebot/.build/checkouts/crypto.git--2214381595129333783/Sources/CCryptoOpenSSL/include"
+    export *
+}

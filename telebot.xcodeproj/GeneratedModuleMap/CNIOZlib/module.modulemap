@@ -1,0 +1,4 @@
+module CNIOZlib {
+    umbrella "/Users/ddos/Developer/telebot/.build/checkouts/swift-nio.git-1959558847379990707/Sources/CNIOZlib/include"
+    export *
+}
