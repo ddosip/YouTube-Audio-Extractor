@@ -1,3 +1,3 @@
-# telebot
+# YouTube-Audio-Extractor
 
-A description of this package.
+YouTube-Audio-Extractor это простейший бот на Swift, который умеет в ответ на ссылку на YouTube присылать аудиодорожку.
